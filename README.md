@@ -13,3 +13,8 @@ eg:
 will schedule a callout ```POST http://localhost:3000``` with ```{"Hello": "world"}``` as the body
 
 Currently only supports Http POST, JSON content and one single date.
+
+
+# run:
+
+    mvn clean compile exec:java 
