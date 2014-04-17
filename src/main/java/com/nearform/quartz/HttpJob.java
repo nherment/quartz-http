@@ -15,8 +15,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-public class HttpJob implements Job
-{
+public class HttpJob implements Job {
 
 	public void execute(JobExecutionContext context) throws JobExecutionException {
 
