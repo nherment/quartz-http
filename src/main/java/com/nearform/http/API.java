@@ -10,9 +10,13 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
+// import org.eclipse.jetty.server.Server;
+// import org.eclipse.jetty.server.Request;
+// import org.eclipse.jetty.server.handler.AbstractHandler;
+
+import javax.servlet.*;
+import javax.servlet.http.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.quartz.JobDetail;
@@ -29,25 +33,29 @@ import static org.quartz.DateBuilder.*;
 import com.nearform.quartz.JobData;
 import com.nearform.quartz.HttpJob;
 
-public class API extends AbstractHandler {
+public class API extends HttpServlet {
 
   private ObjectMapper mapper = new ObjectMapper(); // can reuse, share globally
   private Scheduler scheduler;
 
-  protected void doStart() throws Exception {
-    scheduler = StdSchedulerFactory.getDefaultScheduler();
-    scheduler.start();
-    super.doStart();
+  public void init() throws ServletException {
+    try {
+      scheduler = StdSchedulerFactory.getDefaultScheduler();
+      scheduler.start();
+    } catch(SchedulerException e) {
+      throw new ServletException("Could not start due to scheduler exception", e);
+    }
   }
 
-  protected void doStop() throws Exception {
-    scheduler.shutdown();
-    super.doStop();
+  public void destroy() {
+    try {
+      scheduler.shutdown();
+    } catch(SchedulerException e) {
+      e.printStackTrace();
+    }
   }
 
-  public void handle(String target,
-                     Request baseRequest,
-                     HttpServletRequest request,
+  public void doPost(HttpServletRequest request,
                      HttpServletResponse response)
                      throws IOException, ServletException {
 
@@ -106,12 +114,12 @@ public class API extends AbstractHandler {
   private void unschedule(String key) {
   }
 
-  public static void main(String[] args) throws Exception {
-    Server server = new Server(8080);
+//   public static void main(String[] args) throws Exception {
+//     Server server = new Server(8080);
 
-    server.setHandler(new API());
+//     server.setHandler(new API());
 
-    server.start();
-    server.join();
-  }
+//     server.start();
+//     server.join();
+//   }
 }
