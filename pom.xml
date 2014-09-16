@@ -7,8 +7,8 @@
   <version>1.0-SNAPSHOT</version>
 
   <properties>
-    <java.version>1.6</java.version>
-    <jettyVersion>8.1.15.v20140411</jettyVersion>
+    <java.version>1.7</java.version>
+    <jettyVersion>9.2.3.v20140905</jettyVersion>
   </properties>
 
   <name>quartz-http</name>
@@ -36,7 +36,7 @@
     </dependency>
 
     <!-- jetty -->
-<!--     <dependency>
+    <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
       <version>${jettyVersion}</version>
@@ -51,20 +51,33 @@
     <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-webapp</artifactId>
-        <version>7.2.2.v20101205</version>
+        <version>9.2.3.v20140905</version>
     </dependency>
 
     <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-jsp-2.1</artifactId>
         <version>7.2.2.v20101205</version>
-    </dependency> -->
+    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>javax.servlet</groupId>-->
+      <!--<artifactId>javax.servlet-api</artifactId>-->
+      <!--<version>3.0.1</version>-->
+      <!--<scope>provided</scope>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+      <!--<groupId>org.eclipse.jetty.orbit</groupId>-->
+      <!--<artifactId>javax.servlet</artifactId>-->
+      <!--<version>3.0.0.v201112011016</version>-->
+      <!--<scope>provided</scope>-->
+    <!--</dependency>-->
+
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
-      <version>3.0.1</version>
-      <scope>provided</scope>
+      <version>3.1.0</version>
     </dependency>
+
 
     <!-- JSON/Java (de)serialization -->
     <dependency>
@@ -123,7 +136,7 @@
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.mortbay.jetty</groupId>
+        <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
         <version>${jettyVersion}</version>
         <configuration>

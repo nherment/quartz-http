@@ -10,9 +10,11 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-// import org.eclipse.jetty.server.Server;
-// import org.eclipse.jetty.server.Request;
-// import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.AbstractHandler;
+
+
 
 //import javax.servlet.*;
 import javax.servlet.http.*;
@@ -20,15 +22,15 @@ import javax.servlet.http.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.quartz.JobDetail;
+import org.quartz.JobKey;
 import org.quartz.Trigger;
 import org.quartz.TriggerKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
+
 import static org.quartz.JobBuilder.*;
 import static org.quartz.TriggerBuilder.*;
-//import static org.quartz.SimpleScheduleBuilder.*;
-//import static org.quartz.DateBuilder.*;
 
 import com.nearform.quartz.JobData;
 import com.nearform.quartz.HttpJob;
@@ -84,7 +86,30 @@ public class API extends HttpServlet {
 		} catch (SchedulerException e) {
 			mapper.writeValue(response.getOutputStream(), new ErrorResponse(e));
 		}
+	}
 
+	public void doDelete(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+
+		BufferedReader br = new BufferedReader(new InputStreamReader(
+				request.getInputStream()));
+		String json = "";
+		if (br != null) {
+			String nextLine = br.readLine();
+			while (nextLine != null) {
+				json += nextLine;
+				nextLine = br.readLine();
+			}
+			br.close();
+		}
+		System.out.println(json);
+
+		ScheduleResponse jobData = this.mapper.readValue(json, ScheduleResponse.class);
+
+		response.setContentType("application/json");
+
+		ScheduleResponse responseContent = unschedule(jobData);
+		mapper.writeValue(response.getOutputStream(), responseContent);
 	}
 
 	private ScheduleResponse schedule(JobData jobData)
@@ -112,15 +137,32 @@ public class API extends HttpServlet {
 		return response;
 	}
 
-	private void unschedule(String key) {
+	// Delete the Job and Unschedule All of Its Triggers
+	private ScheduleResponse unschedule(ScheduleResponse jobDataCancel) {
+		String[] parts = jobDataCancel.getKey().split("::");
+		ScheduleResponse response = new ScheduleResponse();
+		response.setKey("false");
+		if(parts.length == 2) {
+			try {
+				// JobKey takes a name as first param and group as second param
+				// We've stored it the other way around so reference the array "backwards"
+				scheduler.deleteJob(new JobKey(parts[1], parts[0]));
+				response.setKey("true");
+				return response;
+			} catch (SchedulerException e) {
+				System.out.println("Failed to delete job");
+				e.printStackTrace();
+			}
+		}
+		return response;
 	}
 
-	// public static void main(String[] args) throws Exception {
-	// Server server = new Server(8080);
+/*	public static void main(String[] args) throws Exception {
+		Server server = new Server(8080);
 
-	// server.setHandler(new API());
+		server.setHandler(new API());
 
-	// server.start();
-	// server.join();
-	// }
+		server.start();
+		server.join();
+	}*/
 }
