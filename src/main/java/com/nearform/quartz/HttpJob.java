@@ -6,7 +6,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import java.io.IOException;
 
-
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -17,44 +16,48 @@ import org.apache.http.util.EntityUtils;
 
 public class HttpJob implements Job {
 
-	public void execute(JobExecutionContext context) throws JobExecutionException {
+	public void execute(JobExecutionContext context)
+			throws JobExecutionException {
 
-    CloseableHttpClient httpclient = HttpClients.createDefault();
-    try {
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		try {
 
-      JobDataMap dataMap = context.getJobDetail().getJobDataMap();
+			JobDataMap dataMap = context.getJobDetail().getJobDataMap();
 
-      String url = dataMap.getString("url");
-      String jsonPayload = dataMap.getString("payload");
+			String url = dataMap.getString("url");
+			String jsonPayload = dataMap.getString("payload");
 
-      System.out.println("Executing job " + context.getJobDetail().getKey().toString() + ", url:" + url + ", payload:" + jsonPayload);
+			System.out.println("Executing job "
+					+ context.getJobDetail().getKey().toString() + ", url:"
+					+ url + ", payload:" + jsonPayload);
 
-      HttpPost httppost = new HttpPost(url);
+			HttpPost httppost = new HttpPost(url);
 
-      StringEntity reqEntity = new StringEntity(
-          jsonPayload,
-          ContentType.create("application/json", "UTF-8"));
+			StringEntity reqEntity = new StringEntity(jsonPayload,
+					ContentType.create("application/json", "UTF-8"));
 
-      httppost.setEntity(reqEntity);
+			httppost.setEntity(reqEntity);
 
-      System.out.println("Executing request: " + httppost.getRequestLine());
+			System.out.println("Executing request: "
+					+ httppost.getRequestLine());
 
-      CloseableHttpResponse response = httpclient.execute(httppost);
-      try {
-        System.out.println("http response: " + response.getStatusLine());
-        EntityUtils.consume(response.getEntity());
-      } finally {
-        response.close();
-      }
-    } catch(IOException ioe) {
-      ioe.printStackTrace();
-    } finally {
-      try {
-        httpclient.close();
-      } catch(IOException ioe) {
-        ioe.printStackTrace();
-      }
-    }
-  }
+			CloseableHttpResponse response = httpclient.execute(httppost);
+			try {
+				System.out
+						.println("http response: " + response.getStatusLine());
+				EntityUtils.consume(response.getEntity());
+			} finally {
+				response.close();
+			}
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		} finally {
+			try {
+				httpclient.close();
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			}
+		}
+	}
 
 }

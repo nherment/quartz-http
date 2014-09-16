@@ -35,92 +35,92 @@ import com.nearform.quartz.HttpJob;
 
 public class API extends HttpServlet {
 
-private static final long serialVersionUID = 7749936643683585485L;
-private ObjectMapper mapper = new ObjectMapper(); // can reuse, share globally
-  private Scheduler scheduler;
+	private static final long serialVersionUID = 7749936643683585485L;
+	private ObjectMapper mapper = new ObjectMapper(); // can reuse, share
+														// globally
+	private Scheduler scheduler;
 
-  public void init() throws ServletException {
-    try {
-      scheduler = StdSchedulerFactory.getDefaultScheduler();
-      scheduler.start();
-    } catch(SchedulerException e) {
-      throw new ServletException("Could not start due to scheduler exception", e);
-    }
-  }
+	public void init() throws ServletException {
+		try {
+			scheduler = StdSchedulerFactory.getDefaultScheduler();
+			scheduler.start();
+		} catch (SchedulerException e) {
+			throw new ServletException(
+					"Could not start due to scheduler exception", e);
+		}
+	}
 
-  public void destroy() {
-    try {
-      scheduler.shutdown();
-    } catch(SchedulerException e) {
-      e.printStackTrace();
-    }
-  }
+	public void destroy() {
+		try {
+			scheduler.shutdown();
+		} catch (SchedulerException e) {
+			e.printStackTrace();
+		}
+	}
 
-  public void doPost(HttpServletRequest request,
-                     HttpServletResponse response)
-                     throws IOException, ServletException {
+	public void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
 
-    BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream()));
-    String json = "";
-    if(br != null){
-      String nextLine = br.readLine();
-      while(nextLine != null) {
-        json += nextLine;
-        nextLine = br.readLine();
-      }
-      br.close();
-    }
-    System.out.println(json);
+		BufferedReader br = new BufferedReader(new InputStreamReader(
+				request.getInputStream()));
+		String json = "";
+		if (br != null) {
+			String nextLine = br.readLine();
+			while (nextLine != null) {
+				json += nextLine;
+				nextLine = br.readLine();
+			}
+			br.close();
+		}
+		System.out.println(json);
 
-    JobData jobData = this.mapper.readValue(json, JobData.class);
+		JobData jobData = this.mapper.readValue(json, JobData.class);
 
-    response.setContentType("application/json");
+		response.setContentType("application/json");
 
-    try {
-      ScheduleResponse responseContent = schedule(jobData);
-      mapper.writeValue(response.getOutputStream(), responseContent);
-    } catch(SchedulerException e) {
-      mapper.writeValue(response.getOutputStream(), new ErrorResponse(e));
-    }
+		try {
+			ScheduleResponse responseContent = schedule(jobData);
+			mapper.writeValue(response.getOutputStream(), responseContent);
+		} catch (SchedulerException e) {
+			mapper.writeValue(response.getOutputStream(), new ErrorResponse(e));
+		}
 
+	}
 
-  }
+	private ScheduleResponse schedule(JobData jobData)
+			throws SchedulerException {
 
-  private ScheduleResponse schedule(JobData jobData) throws SchedulerException {
+		JobDetail job = newJob(HttpJob.class)
+				.withIdentity(UUID.randomUUID().toString(), "http")
+				.usingJobData("url", jobData.getUrl())
+				.usingJobData("payload", jobData.getPayload()).build();
 
-    JobDetail job = newJob(HttpJob.class)
-        .withIdentity(UUID.randomUUID().toString(), "http")
-        .usingJobData("url", jobData.getUrl())
-        .usingJobData("payload", jobData.getPayload())
-        .build();
+		Date startTime = new Date(jobData.getTimestamp());
 
-    Date startTime = new Date(jobData.getTimestamp());
+		Trigger trigger = newTrigger()
+				.withIdentity(UUID.randomUUID().toString(), "http")
+				.startAt(startTime).build();
 
-    Trigger trigger = newTrigger()
-        .withIdentity(UUID.randomUUID().toString(), "http")
-        .startAt(startTime)
-        .build();
+		scheduler.scheduleJob(job, trigger);
 
-    scheduler.scheduleJob(job, trigger);
+		TriggerKey triggerKey = trigger.getKey();
+		ScheduleResponse response = new ScheduleResponse();
+		response.setKey(triggerKey.getGroup() + "::" + triggerKey.getName());
 
-    TriggerKey triggerKey = trigger.getKey();
-    ScheduleResponse response = new ScheduleResponse();
-    response.setKey(triggerKey.getGroup() + "::" + triggerKey.getName());
+		System.out.println("Scheduling job " + startTime);
 
-    System.out.println("Scheduling job " + startTime);
+		return response;
+	}
 
-    return response;
-  }
+	private void unschedule(String key) {
+	}
 
-  private void unschedule(String key) {
-  }
+	// public static void main(String[] args) throws Exception {
+	// Server server = new Server(8080);
 
-//   public static void main(String[] args) throws Exception {
-//     Server server = new Server(8080);
+	// server.setHandler(new API());
 
-//     server.setHandler(new API());
-
-//     server.start();
-//     server.join();
-//   }
+	// server.start();
+	// server.join();
+	// }
 }
