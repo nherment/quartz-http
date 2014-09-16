@@ -14,7 +14,7 @@ import java.io.InputStreamReader;
 // import org.eclipse.jetty.server.Request;
 // import org.eclipse.jetty.server.handler.AbstractHandler;
 
-import javax.servlet.*;
+//import javax.servlet.*;
 import javax.servlet.http.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,15 +27,16 @@ import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
 import static org.quartz.JobBuilder.*;
 import static org.quartz.TriggerBuilder.*;
-import static org.quartz.SimpleScheduleBuilder.*;
-import static org.quartz.DateBuilder.*;
+//import static org.quartz.SimpleScheduleBuilder.*;
+//import static org.quartz.DateBuilder.*;
 
 import com.nearform.quartz.JobData;
 import com.nearform.quartz.HttpJob;
 
 public class API extends HttpServlet {
 
-  private ObjectMapper mapper = new ObjectMapper(); // can reuse, share globally
+private static final long serialVersionUID = 7749936643683585485L;
+private ObjectMapper mapper = new ObjectMapper(); // can reuse, share globally
   private Scheduler scheduler;
 
   public void init() throws ServletException {

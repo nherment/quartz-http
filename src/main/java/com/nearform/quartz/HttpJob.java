@@ -33,7 +33,7 @@ public class HttpJob implements Job {
 
       StringEntity reqEntity = new StringEntity(
           jsonPayload,
-          "application/json", "UTF-8");
+          ContentType.create("application/json", "UTF-8"));
 
       httppost.setEntity(reqEntity);
 

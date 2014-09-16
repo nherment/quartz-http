@@ -11,11 +11,11 @@ public class ErrorResponse {
 
   private Exception exception;
 
-  private String message;
-  private String stacktrace;
-  private String group;
-  private String payload;
-  private int timestamp;
+//  private String message;
+//  private String stacktrace;
+//  private String group;
+//  private String payload;
+//  private int timestamp;
 
   public String getMessage() { return exception.getMessage(); }
   public String getStackTrace() {
