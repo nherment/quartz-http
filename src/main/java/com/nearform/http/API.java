@@ -90,24 +90,13 @@ public class API extends HttpServlet {
 	public void doDelete(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
 
-		BufferedReader br = new BufferedReader(new InputStreamReader(
-				request.getInputStream()));
-		String json = "";
-		if (br != null) {
-			String nextLine = br.readLine();
-			while (nextLine != null) {
-				json += nextLine;
-				nextLine = br.readLine();
-			}
-			br.close();
-		}
-		System.out.println(json);
-
-		ScheduleResponse jobData = this.mapper.readValue(json, ScheduleResponse.class);
+		String path = request.getRequestURI();
+		String[] parts = path.split("/");
+		String key = parts[parts.length-1];
 
 		response.setContentType("application/json");
 
-		ScheduleResponse responseContent = unschedule(jobData);
+		ScheduleResponse responseContent = unschedule(key);
 		mapper.writeValue(response.getOutputStream(), responseContent);
 	}
 
@@ -137,8 +126,8 @@ public class API extends HttpServlet {
 	}
 
 	// Delete the Job and Unschedule All of Its Triggers
-	private ScheduleResponse unschedule(ScheduleResponse jobDataCancel) {
-		String[] parts = jobDataCancel.getKey().split("::");
+	private ScheduleResponse unschedule(String key) {
+		String[] parts = key.split("::");
 		ScheduleResponse response = new ScheduleResponse();
 		response.setKey("false");
 		if(parts.length == 2) {
