@@ -136,11 +136,14 @@ public class API extends HttpServlet {
 				// We've stored it the other way around so reference the array "backwards"
 				scheduler.deleteJob(new JobKey(parts[1], parts[0]));
 				response.setKey("true");
+				System.out.println("Canceling job: " + key);
 				return response;
 			} catch (SchedulerException e) {
-				System.out.println("Failed to delete job");
+				System.out.println("Failed to cancel job: " + key);
 				e.printStackTrace();
 			}
+		} else {
+			System.out.println("Unexpected key structure in unschedule: " + key);
 		}
 		return response;
 	}
