@@ -10,11 +10,10 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-
-
+// Server/main is not needed because Jetty will run this for us.
+//import org.eclipse.jetty.server.Server;
+//import org.eclipse.jetty.server.Request;
+//import org.eclipse.jetty.server.handler.AbstractHandler;
 
 //import javax.servlet.*;
 import javax.servlet.http.*;
