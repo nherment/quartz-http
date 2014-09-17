@@ -1,1 +1,5 @@
 target
+.metadata/
+.classpath
+.project
+.settings/
