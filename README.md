@@ -28,6 +28,12 @@ Currently supports Http POST, JSON content and one single date to add to the sch
 # run server:
 
     mvn jetty:run
+    
+Will download, build, run the server on the default port 8080
+
+    mvn -Djetty.port=8090 jetty:run
+
+Will download, build, run the server on port 8090
 
 # compile war file to /target directory:
 
