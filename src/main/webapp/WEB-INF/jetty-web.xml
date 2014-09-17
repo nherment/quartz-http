@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
+
+<Configure class="org.eclipse.jetty.maven.plugin.JettyWebAppContext">
+  <!-- You can set the contextPath to any path that you want. If you want your
+       API to run from /api then set that. Or from root set / or from foobar
+       then set it to /foobar -->
+  <!--<Set name="contextPath">/</Set>-->
+  <Set name="contextPath">/scheduler</Set>
+  <Set name="war"><Property name="jetty.home"/>/target/scheduler.war</Set>
+  <Set name="virtualHosts">
+    <Array type="java.lang.String">
+      <Item>127.0.0.1</Item>
+      <Item>localhost</Item>
+      <Item>www.yourdomain.com</Item>
+    </Array>
+  </Set>
+</Configure>
