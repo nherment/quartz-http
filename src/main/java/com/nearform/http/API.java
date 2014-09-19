@@ -142,21 +142,27 @@ public class API extends HttpServlet {
 		String path = request.getRequestURI();
 		String[] parts = path.split("/");
 		String key = parts[parts.length-1];
+		
+		System.out.println("key to delete: " + key);
+		
+		JobDataId jobDataId = new JobDataId();
+		jobDataId.setJobId(key);
 
 		response.setContentType("application/json");
 
-		ScheduleResponse responseContent = unschedule(key);
+		ScheduleResponse responseContent = unschedule(jobDataId);
 		mapper.writeValue(response.getOutputStream(), responseContent);
 		System.out.println("DELETE: Canceling a job end.");
 	}
 
 	private ScheduleResponse update(JobData jobData, JobDataId jobDataId)
 			throws SchedulerException {
+		System.out.println(jobData);
 
 		// Add the new job to the scheduler, instructing it to "replace"
 		//  the existing job with the given name and group (if any)
 		JobDetail job = newJob(HttpJob.class)
-			    .withIdentity(jobDataId.getName(), jobDataId.getGroup())
+			    .withIdentity(jobDataId.getJobName(), jobDataId.getGroup())
 				.usingJobData("url", jobData.getUrl())
 				.usingJobData("payload", jobData.getPayload()).build();
 
@@ -167,10 +173,10 @@ public class API extends HttpServlet {
 		// Now adjust the trigger to the new time.
 		Date startTime = new Date(jobData.getTimestamp());
 
-		Trigger oldTrigger = scheduler.getTrigger(TriggerKey.triggerKey(jobDataId.getName(), jobDataId.getGroup()));
+		Trigger oldTrigger = scheduler.getTrigger(TriggerKey.triggerKey(jobDataId.getTriggerName(), jobDataId.getGroup()));
 		
 		Trigger newTrigger = newTrigger()
-				.withIdentity(jobDataId.getName(), jobDataId.getGroup())
+				.withIdentity(jobDataId.getTriggerName(), jobDataId.getGroup())
 				.startAt(startTime).build();
 		
 		scheduler.rescheduleJob(oldTrigger.getKey(), newTrigger);
@@ -201,7 +207,7 @@ public class API extends HttpServlet {
 
 		TriggerKey triggerKey = trigger.getKey();
 		ScheduleResponse response = new ScheduleResponse();
-		response.setKey(triggerKey.getGroup() + "::" + triggerKey.getName());
+		response.setKey(triggerKey.getGroup() + JobDataId.groupDelimiter + triggerKey.getName() + JobDataId.triggerJobDelimiter + job.getKey().getName());
 
 		System.out.println("Scheduling job " + startTime);
 
@@ -209,24 +215,19 @@ public class API extends HttpServlet {
 	}
 
 	// Delete the Job and Unschedule All of Its Triggers
-	private ScheduleResponse unschedule(String key) {
-		String[] parts = key.split("::");
+	private ScheduleResponse unschedule(JobDataId jobDataId) {
 		ScheduleResponse response = new ScheduleResponse();
 		response.setKey("false");
-		if(parts.length == 2) {
-			try {
-				// JobKey takes a name as first param and group as second param
-				// We've stored it the other way around so reference the array "backwards"
-				scheduler.deleteJob(new JobKey(parts[1], parts[0]));
-				response.setKey("true");
-				System.out.println("Canceling job: " + key);
-				return response;
-			} catch (SchedulerException e) {
-				System.out.println("Failed to cancel job: " + key);
-				e.printStackTrace();
-			}
-		} else {
-			System.out.println("Unexpected key structure in unschedule: " + key);
+		try {
+			// JobKey takes a name as first param and group as second param
+			// We've stored it the other way around so reference the array "backwards"
+			scheduler.deleteJob(new JobKey(jobDataId.getJobName(), jobDataId.getGroup()));
+			response.setKey("true");
+			System.out.println("Canceling job: " + jobDataId.getJobName());
+			return response;
+		} catch (SchedulerException e) {
+			System.out.println("Failed to cancel job: " + jobDataId.getJobName());
+			e.printStackTrace();
 		}
 		return response;
 	}
