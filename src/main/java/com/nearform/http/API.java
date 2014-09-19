@@ -15,9 +15,12 @@ import java.io.InputStreamReader;
 //import org.eclipse.jetty.server.Request;
 //import org.eclipse.jetty.server.handler.AbstractHandler;
 
+
+
 //import javax.servlet.*;
 import javax.servlet.http.*;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.quartz.JobDetail;
@@ -33,6 +36,7 @@ import static org.quartz.TriggerBuilder.*;
 
 import com.nearform.quartz.JobData;
 import com.nearform.quartz.HttpJob;
+import com.nearform.quartz.JobDataId;
 
 public class API extends HttpServlet {
 
@@ -43,6 +47,10 @@ public class API extends HttpServlet {
 
 	public void init() throws ServletException {
 		try {
+			// The next line prevents failure when deserializing a JSON object that has
+			// more properties than we've defined in the class that we're deserializing
+			// the data into.
+			mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 			scheduler = StdSchedulerFactory.getDefaultScheduler();
 			scheduler.start();
 		} catch (SchedulerException e) {
@@ -59,8 +67,10 @@ public class API extends HttpServlet {
 		}
 	}
 
+	// This is the C from Crud. Create a new job in the scheduler
 	public void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
+		System.out.println("POST: Creating a job start.");
 
 		BufferedReader br = new BufferedReader(new InputStreamReader(
 				request.getInputStream()));
@@ -83,12 +93,51 @@ public class API extends HttpServlet {
 			ScheduleResponse responseContent = schedule(jobData);
 			mapper.writeValue(response.getOutputStream(), responseContent);
 		} catch (SchedulerException e) {
+			System.out.println("ERROR: " + e);
+			e.printStackTrace();
 			mapper.writeValue(response.getOutputStream(), new ErrorResponse(e));
 		}
+		System.out.println("POST: Creating a job end.");
 	}
 
+	// This is the U from crUd. Update an existing job in the scheduler
+	public void doPut(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		System.out.println("PUT: Updating a job start.");
+
+		BufferedReader br = new BufferedReader(new InputStreamReader(
+				request.getInputStream()));
+		String json = "";
+		if (br != null) {
+			String nextLine = br.readLine();
+			while (nextLine != null) {
+				json += nextLine;
+				nextLine = br.readLine();
+			}
+			br.close();
+		}
+		System.out.println(json);
+
+		JobData jobData = this.mapper.readValue(json, JobData.class);
+		JobDataId jobDataId = this.mapper.readValue(json, JobDataId.class);
+
+		response.setContentType("application/json");
+
+		try {
+			ScheduleResponse responseContent = update(jobData, jobDataId);
+			mapper.writeValue(response.getOutputStream(), responseContent);
+		} catch (SchedulerException e) {
+			System.out.println("ERROR: " + e);
+			e.printStackTrace();
+			mapper.writeValue(response.getOutputStream(), new ErrorResponse(e));
+		}
+		System.out.println("PUT: Updating a job end.");
+	}
+
+	// This is the D from cruD. Delete a job from the scheduler
 	public void doDelete(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
+		System.out.println("DELETE: Canceling a job start.");
 
 		String path = request.getRequestURI();
 		String[] parts = path.split("/");
@@ -98,6 +147,40 @@ public class API extends HttpServlet {
 
 		ScheduleResponse responseContent = unschedule(key);
 		mapper.writeValue(response.getOutputStream(), responseContent);
+		System.out.println("DELETE: Canceling a job end.");
+	}
+
+	private ScheduleResponse update(JobData jobData, JobDataId jobDataId)
+			throws SchedulerException {
+
+		// Add the new job to the scheduler, instructing it to "replace"
+		//  the existing job with the given name and group (if any)
+		JobDetail job = newJob(HttpJob.class)
+			    .withIdentity(jobDataId.getName(), jobDataId.getGroup())
+				.usingJobData("url", jobData.getUrl())
+				.usingJobData("payload", jobData.getPayload()).build();
+
+		// addJob(JobDetail jobDetail, boolean replace, boolean storeNonDurableWhileAwaitingScheduling)
+        // Add the given Job to the Scheduler - with no associated Trigger.     
+		scheduler.addJob(job, true, true);
+
+		// Now adjust the trigger to the new time.
+		Date startTime = new Date(jobData.getTimestamp());
+
+		Trigger oldTrigger = scheduler.getTrigger(TriggerKey.triggerKey(jobDataId.getName(), jobDataId.getGroup()));
+		
+		Trigger newTrigger = newTrigger()
+				.withIdentity(jobDataId.getName(), jobDataId.getGroup())
+				.startAt(startTime).build();
+		
+		scheduler.rescheduleJob(oldTrigger.getKey(), newTrigger);
+
+		ScheduleResponse response = new ScheduleResponse();
+		response.setKey(jobDataId.getJobId());
+
+		System.out.println("Upading job with key: " + jobDataId.getJobId());
+
+		return response;
 	}
 
 	private ScheduleResponse schedule(JobData jobData)
