@@ -38,4 +38,13 @@ Will download, build, run the server on port 8090
 # compile war file to /target directory:
 
     mvn package 
+    
+# Testing server
 
+If you use a browser (or use curl with -GET) to navigate to the URL that the scheduler is running on your should receive this type of error:
+
+HTTP ERROR 405
+Problem accessing /scheduler/api. Reason:
+HTTP method GET is not supported by this URL
+
+This is good and what you should expect from a GET. The URL will only support POST, PUT and DELETE.
