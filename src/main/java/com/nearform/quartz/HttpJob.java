@@ -2,9 +2,12 @@ package com.nearform.quartz;
 
 import org.quartz.Job;
 import org.quartz.JobDataMap;
+import org.quartz.TriggerKey;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import java.io.IOException;
+
+import com.nearform.quartz.JobDataId;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -31,7 +34,11 @@ public class HttpJob implements Job {
 					+ context.getJobDetail().getKey().toString() + ", url:"
 					+ url + ", payload:" + jsonPayload);
 
-			HttpPost httppost = new HttpPost(url);
+			TriggerKey triggerKey = context.getTrigger().getKey();
+
+			String key = triggerKey.getGroup() + JobDataId.groupDelimiter + triggerKey.getName() + JobDataId.triggerJobDelimiter + context.getJobDetail().getKey().getName();
+
+			HttpPost httppost = new HttpPost(url + "?key="+key);
 
 			StringEntity reqEntity = new StringEntity(jsonPayload,
 					ContentType.create("application/json", "UTF-8"));
