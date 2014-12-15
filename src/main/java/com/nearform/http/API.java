@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 
+import java.lang.Boolean;
 import java.util.UUID;
 import java.util.Date;
 import java.io.IOException;
@@ -142,15 +143,18 @@ public class API extends HttpServlet {
 		String path = request.getRequestURI();
 		String[] parts = path.split("/");
 		String key = parts[parts.length-1];
-		
+
 		System.out.println("key to delete: " + key);
-		
+
 		JobDataId jobDataId = new JobDataId();
 		jobDataId.setJobId(key);
 
 		response.setContentType("application/json");
 
 		ScheduleResponse responseContent = unschedule(jobDataId);
+		if("false".equals(responseContent.getKey())) {
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+		}
 		mapper.writeValue(response.getOutputStream(), responseContent);
 		System.out.println("DELETE: Canceling a job end.");
 	}
@@ -167,18 +171,18 @@ public class API extends HttpServlet {
 				.usingJobData("payload", jobData.getPayload()).build();
 
 		// addJob(JobDetail jobDetail, boolean replace, boolean storeNonDurableWhileAwaitingScheduling)
-        // Add the given Job to the Scheduler - with no associated Trigger.     
+        // Add the given Job to the Scheduler - with no associated Trigger.
 		scheduler.addJob(job, true, true);
 
 		// Now adjust the trigger to the new time.
 		Date startTime = new Date(jobData.getTimestamp());
 
 		Trigger oldTrigger = scheduler.getTrigger(TriggerKey.triggerKey(jobDataId.getTriggerName(), jobDataId.getGroup()));
-		
+
 		Trigger newTrigger = newTrigger()
 				.withIdentity(jobDataId.getTriggerName(), jobDataId.getGroup())
 				.startAt(startTime).build();
-		
+
 		scheduler.rescheduleJob(oldTrigger.getKey(), newTrigger);
 
 		ScheduleResponse response = new ScheduleResponse();
@@ -221,9 +225,14 @@ public class API extends HttpServlet {
 		try {
 			// JobKey takes a name as first param and group as second param
 			// We've stored it the other way around so reference the array "backwards"
-			scheduler.deleteJob(new JobKey(jobDataId.getJobName(), jobDataId.getGroup()));
-			response.setKey("true");
-			System.out.println("Canceling job: " + jobDataId.getJobName());
+			boolean deleted = scheduler.deleteJob(new JobKey(jobDataId.getJobName(), jobDataId.getGroup()));
+			response.setKey(Boolean.toString(deleted));
+			if(deleted == true) {
+				System.out.println("Canceled job: " + jobDataId.getJobName());
+			} else {
+				System.out.println("Failed to cancel job: " + jobDataId.getJobName());
+			}
+
 			return response;
 		} catch (SchedulerException e) {
 			System.out.println("Failed to cancel job: " + jobDataId.getJobName());
